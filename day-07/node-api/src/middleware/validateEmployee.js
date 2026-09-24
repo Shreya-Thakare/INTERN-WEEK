@@ -1,0 +1,1 @@
+module.exports=(req,res,next)=>{const {name,email,department,position,salary}=req.body;if(!name||!email||!department||!position||Number(salary)<=0)return res.status(400).json({message:'name, email, department, position and positive salary are required'});next();};
