@@ -27,5 +27,9 @@ cd final-project/angular-module
 npm install && npm start
 ```
 
+## Visual Results
+ <img width="1537" height="903" alt="Screenshot 2026-09-25 215940" src="https://github.com/user-attachments/assets/ebee8cff-1d64-4921-8f93-a6e3f0712eca" />
+
+
 ## Presentation
 Use `final-project/presentation-outline.md` for the 10–15 minute final presentation.
