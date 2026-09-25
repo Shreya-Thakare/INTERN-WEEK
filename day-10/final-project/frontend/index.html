@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Smart Facility Management Dashboard</title>
+  <style>
+    :root { font-family: Inter, system-ui, sans-serif; color: #0f172a; background: #f1f5f9; }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    .page { max-width: 1100px; margin: 0 auto; padding: 1.5rem; }
+    header { display: flex; justify-content: space-between; gap: 1rem; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; }
+    header small { color: #64748b; }
+    h1 { margin: 0.2rem 0 0; font-size: 1.55rem; }
+    .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; margin-bottom: 1rem; }
+    .card { background: #fff; border-radius: 12px; padding: 1rem; box-shadow: 0 1px 2px rgb(15 23 42 / 8%); }
+    .card span { color: #64748b; font-size: 0.85rem; display: block; }
+    .card b { font-size: 1.3rem; }
+    .grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 1rem; }
+    .panel { background: #fff; border-radius: 12px; padding: 1rem; box-shadow: 0 1px 2px rgb(15 23 42 / 8%); }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: 0.55rem 0.4rem; border-bottom: 1px solid #e2e8f0; font-size: 0.92rem; }
+    label { display: grid; gap: 0.25rem; font-size: 0.9rem; color: #334155; }
+    input, select, button { border-radius: 8px; padding: 0.5rem 0.7rem; border: 1px solid #cbd5e1; font: inherit; }
+    button { background: #2563eb; color: #fff; border: 0; font-weight: 600; cursor: pointer; }
+    button:hover { filter: brightness(1.05); }
+    .form { display: grid; gap: 0.55rem; }
+    .ok { color: #16a34a; margin: 0.5rem 0 0; }
+    .err { color: #dc2626; margin: 0.5rem 0 0; }
+    .hint { color: #64748b; font-size: 0.85rem; margin: 0.5rem 0 0; }
+    .badge { padding: 0.15rem 0.45rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; }
+    .badge.high { background: #fee2e2; color: #b91c1c; }
+    .badge.low { background: #dcfce7; color: #15803d; }
+    .status { font-size: 0.85rem; padding: 0.35rem 0.6rem; border-radius: 999px; background: #e2e8f0; color: #334155; }
+    .status.online { background: #dcfce7; color: #166534; }
+    .status.offline { background: #fef3c7; color: #92400e; }
+    @media (max-width: 800px) {
+      .metrics { grid-template-columns: 1fr 1fr; }
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header>
+      <div>
+        <small>DAY 10 • FINAL PROJECT</small>
+        <h1>Smart Facility Management Dashboard</h1>
+      </div>
+      <span id="apiStatus" class="status offline">Checking API…</span>
+    </header>
+
+    <section class="metrics">
+      <div class="card"><span>Facilities</span><b id="mFacilities">—</b></div>
+      <div class="card"><span>Open complaints</span><b id="mComplaints">—</b></div>
+      <div class="card"><span>Inspections logged</span><b id="mInspections">—</b></div>
+      <div class="card"><span>High-risk predictions</span><b id="mHigh">0</b></div>
+    </section>
+
+    <div class="grid">
+      <section class="panel">
+        <h2>Facilities</h2>
+        <table>
+          <thead><tr><th>Name</th><th>Location</th><th>Last score</th><th>Predicted risk</th></tr></thead>
+          <tbody id="facilityRows"></tbody>
+        </table>
+      </section>
+
+      <section class="panel">
+        <h2>Hygiene risk prediction</h2>
+        <form class="form" id="predictForm">
+          <label>Cleanliness (0–10)
+            <input name="cleanliness_score" type="number" min="0" max="10" step="0.1" value="5" required />
+          </label>
+          <label>Odor (0–10)
+            <input name="odor_score" type="number" min="0" max="10" step="0.1" value="7" required />
+          </label>
+          <label>Waste (0–10)
+            <input name="waste_level" type="number" min="0" max="10" step="0.1" value="6" required />
+          </label>
+          <label>Complaints
+            <input name="complaints" type="number" min="0" value="4" required />
+          </label>
+          <label>Footfall
+            <input name="footfall" type="number" min="0" value="350" required />
+          </label>
+          <label>Hours since cleaning
+            <input name="hours_since_cleaning" type="number" min="0" value="24" required />
+          </label>
+          <button type="submit">Predict risk</button>
+        </form>
+        <p id="predictResult" class="ok"></p>
+        <p id="predictError" class="err"></p>
+        <p id="predictHint" class="hint"></p>
+      </section>
+    </div>
+
+    <section class="panel" style="margin-top:1rem">
+      <h2>Recent complaints</h2>
+      <table>
+        <thead><tr><th>Facility</th><th>Description</th><th>Status</th></tr></thead>
+        <tbody id="complaintRows"></tbody>
+      </table>
+    </section>
+  </main>
+
+  <script>
+    const API = 'http://localhost:8000';
+
+    const facilities = [
+      { name: 'Central Washroom', location: 'Nagpur Central', score: 5.5 },
+      { name: 'Cafeteria', location: 'Dharampeth', score: 8.2 },
+      { name: 'Library Restroom', location: 'Sitabuldi', score: 6.8 },
+      { name: 'Station Platform WC', location: 'Nagpur Station', score: 4.1 },
+    ];
+    const complaints = [
+      { facility: 'Central Washroom', description: 'Bad odor reported', status: 'Open' },
+      { facility: 'Central Washroom', description: 'Waste bin is full', status: 'In Progress' },
+      { facility: 'Station Platform WC', description: 'No water pressure', status: 'Open' },
+    ];
+
+    document.getElementById('mFacilities').textContent = facilities.length;
+    document.getElementById('mComplaints').textContent = complaints.filter(c => c.status === 'Open').length;
+    document.getElementById('mInspections').textContent = '12';
+
+    document.getElementById('facilityRows').innerHTML = facilities.map(f =>
+      `<tr>
+        <td>${f.name}</td>
+        <td>${f.location}</td>
+        <td>${f.score}</td>
+        <td class="risk" data-score="${f.score}">…</td>
+      </tr>`
+    ).join('');
+
+    document.getElementById('complaintRows').innerHTML = complaints.map(c =>
+      `<tr><td>${c.facility}</td><td>${c.description}</td><td>${c.status}</td></tr>`
+    ).join('');
+
+    /** Local rule-based model — works even when API is offline */
+    function localPredict(d) {
+      const cleanliness = Number(d.cleanliness_score);
+      const odor = Number(d.odor_score);
+      const waste = Number(d.waste_level);
+      const complaints = Number(d.complaints);
+      const footfall = Number(d.footfall);
+      const hours = Number(d.hours_since_cleaning);
+
+      // Higher odor/waste/complaints/delay and lower cleanliness => higher risk
+      let score =
+        (10 - cleanliness) * 0.22 +
+        odor * 0.18 +
+        waste * 0.18 +
+        Math.min(complaints, 12) * 0.12 +
+        Math.min(hours / 48, 1) * 0.18 +
+        Math.min(footfall / 800, 1) * 0.12;
+
+      const prob = Math.max(0, Math.min(1, score / 7.5));
+      return {
+        hygiene_risk: prob >= 0.5 ? 'High' : 'Low',
+        high_risk_probability: Math.round(prob * 1000) / 1000,
+        source: 'local',
+      };
+    }
+
+    async function apiPredict(body) {
+      const res = await fetch(`${API}/predict`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const text = await res.text().catch(() => '');
+        throw new Error(text || `API error ${res.status}`);
+      }
+      const data = await res.json();
+      data.source = 'api';
+      return data;
+    }
+
+    /** Try API first; fall back to local model so the feature always works */
+    async function predict(body) {
+      try {
+        return await apiPredict(body);
+      } catch {
+        return localPredict(body);
+      }
+    }
+
+    function renderBadge(result) {
+      const cls = result.hygiene_risk === 'High' ? 'high' : 'low';
+      const star = result.source === 'local' ? '*' : '';
+      return `<span class="badge ${cls}">${result.hygiene_risk}${star}</span>`;
+    }
+
+    // Facility table risk column
+    document.querySelectorAll('.risk').forEach(async (cell) => {
+      const score = Number(cell.dataset.score);
+      const result = await predict({
+        cleanliness_score: score,
+        odor_score: Math.max(0, 10 - score),
+        waste_level: Math.max(0, 10 - score),
+        complaints: score < 6 ? 4 : 1,
+        footfall: 300,
+        hours_since_cleaning: score < 6 ? 30 : 8,
+      });
+      cell.innerHTML = renderBadge(result);
+    });
+
+    // Form submit
+    document.getElementById('predictForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(e.currentTarget));
+      Object.keys(data).forEach((k) => (data[k] = Number(data[k])));
+
+      const resultEl = document.getElementById('predictResult');
+      const errorEl = document.getElementById('predictError');
+      const hintEl = document.getElementById('predictHint');
+      resultEl.textContent = 'Predicting…';
+      errorEl.textContent = '';
+      hintEl.textContent = '';
+
+      const result = await predict(data);
+      resultEl.innerHTML =
+        `Risk: <strong>${result.hygiene_risk}</strong> ` +
+        `(probability ${result.high_risk_probability})`;
+
+      if (result.source === 'local') {
+        hintEl.textContent =
+          'Used built-in local model (API offline). Start backend for ML predictions: python backend/main.py';
+      } else {
+        hintEl.textContent = 'Prediction from FastAPI ML model.';
+      }
+
+      if (result.hygiene_risk === 'High') {
+        const el = document.getElementById('mHigh');
+        el.textContent = String(Number(el.textContent || 0) + 1);
+      }
+    });
+
+    // API status badge
+    (async function checkApi() {
+      const el = document.getElementById('apiStatus');
+      try {
+        const res = await fetch(`${API}/health`, { signal: AbortSignal.timeout(2000) });
+        if (res.ok) {
+          el.textContent = 'API online';
+          el.className = 'status online';
+        } else {
+          throw new Error('bad status');
+        }
+      } catch {
+        el.textContent = 'API offline — local model active';
+        el.className = 'status offline';
+      }
+    })();
+  </script>
+</body>
+</html>
