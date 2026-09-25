@@ -46,5 +46,9 @@ day-05/
 - UI could become stale after CRUD actions: call `render()` after every state change.
 - Invalid input: validate name, email, department, position, and positive salary before saving.
 
+## Visual output
+<img width="1581" height="912" alt="Screenshot 2026-09-25 220754" src="https://github.com/user-attachments/assets/3fadb5e0-1e7a-4062-9489-3e5c1dc3d60b" />
+
+
 ## Future improvements
 Replace local storage with a REST API/database, add authentication, pagination, unit tests, and server-side validation.
