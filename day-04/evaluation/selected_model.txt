@@ -1,3 +1,0 @@
-Selected model: Logistic Regression
-Selection metric: F1 score
-F1 score: 0.983
