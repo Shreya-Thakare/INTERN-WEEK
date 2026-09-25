@@ -72,6 +72,9 @@ Open this file in a browser for a full dark-theme dashboard with accurate live c
 ```text
 day-06/index.html
 ```
+## Visual output
+<img width="1566" height="912" alt="Screenshot 2026-09-25 222210" src="https://github.com/user-attachments/assets/6786b601-fa20-4aa1-a8bb-bbfeb146933d" />
+
 
 Features:
 - Metrics: total, average salary, departments, highest salary
