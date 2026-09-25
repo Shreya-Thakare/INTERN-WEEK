@@ -1,1 +1,0 @@
-export const metadata={title:'Employee Dashboard'};export default function Layout({children}){return <html lang="en"><body style={{fontFamily:'Arial',maxWidth:900,margin:'30px auto',padding:16}}>{children}</body></html>}

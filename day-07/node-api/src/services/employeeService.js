@@ -1,1 +1,0 @@
-const model=require('../models/employeeModel');const list=()=>model.all();const get=id=>model.byId(id);const add=data=>model.create(data);const edit=(id,data)=>model.update(id,data);const del=id=>model.remove(id);module.exports={list,get,add,edit,del};
