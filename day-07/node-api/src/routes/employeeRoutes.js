@@ -1,1 +1,0 @@
-const router=require('express').Router();const c=require('../controllers/employeeController');const validate=require('../middleware/validateEmployee');router.get('/',c.list);router.get('/:id',c.get);router.post('/',validate,c.create);router.put('/:id',validate,c.update);router.delete('/:id',c.remove);module.exports=router;
